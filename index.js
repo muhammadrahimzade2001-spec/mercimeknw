@@ -17,9 +17,9 @@ const SUNUCU_IP = "play.mercimeknw.com.tr";
 const SUNUCU_SURUM = "1.20.1x";
 const SUNUCU_MOD = "BoxPvP";
 
-// --- GÖRSELLER (BURAYI KENDİNE GÖRE AYARLA) ---
-const LOGO_URL = "https://i.imgur.com/8Q5X7yG.png"; // Sağ üstteki küçük logo (İstersen değiştir)
-const GIF_URL = "https://i.imgur.com/3LLNakg.gif";  // Alttaki büyük GIF (Attığın GIF)
+// --- GÖRSELLER ---
+const LOGO_URL = "https://i.imgur.com/8Q5X7yG.png";
+const GIF_URL = "https://i.imgur.com/3LLNakg.gif";
 
 // --- TICKET KATEGORİLERİ ---
 const TICKET_KATEGORILERI = [
@@ -48,7 +48,7 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
         const { commandName } = interaction;
 
-        // --- /destek-oluştur (GIF'Lİ TASARIM) ---
+        // --- /destek-oluştur ---
         if (commandName === 'destek-oluştur') {
             if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
                 return interaction.reply({ content: '❌ Bu komutu sadece kurucular kullanabilir.', ephemeral: true });
@@ -66,9 +66,9 @@ client.on('interactionCreate', async interaction => {
                     `• Sorunu detaylı bir şekilde açıklayın.\n` +
                     `• Gerekli bilgileri eksiksiz paylaşın.`
                 )
-                .setColor('#FFA500') // Turuncu renk
-                .setThumbnail(LOGO_URL) // Sağ üstteki küçük logo
-                .setImage(GIF_URL)      // Alttaki büyük GIF
+                .setColor('#FFA500')
+                .setThumbnail(LOGO_URL)
+                .setImage(GIF_URL)
                 .setFooter({ text: 'Powered by MercimekNW • ticket-tool.app', iconURL: client.user.displayAvatarURL() })
                 .setTimestamp();
 
@@ -81,7 +81,6 @@ client.on('interactionCreate', async interaction => {
 
             const row = new ActionRowBuilder().addComponents(menu);
             
-            // Embed ve menüyü gönderiyoruz
             await interaction.channel.send({ embeds: [panelEmbed], components: [row] });
             return interaction.reply({ content: '✅ Destek paneli başarıyla gönderildi.', ephemeral: true });
         }
@@ -163,11 +162,11 @@ client.on('interactionCreate', async interaction => {
             }
         }
 
-        // --- /mute (Timeout) ---
+        // --- /mute (Süre ve sebep parametreleri düzeltildi) ---
         if (commandName === 'mute') {
             if (!yetkiliMi(interaction.member)) return interaction.reply({ content: '❌ Bu komutu kullanmak için yetkili olmalısın.', ephemeral: true });
-            const kullanici = interaction.options.getMember('kullanıcı');
-            const sure = interaction.options.getInteger('süre'); // dakika
+            const kullanici = interaction.options.getMember('kullanici'); // İngilizce 'kullanici' olarak güncellendi
+            const sure = interaction.options.getInteger('sure'); // İngilizce 'sure' olarak güncellendi
             const sebep = interaction.options.getString('sebep') || 'Sebep belirtilmedi';
             
             if (!kullanici) return interaction.reply({ content: '❌ Kullanıcı bulunamadı.', ephemeral: true });
@@ -183,7 +182,7 @@ client.on('interactionCreate', async interaction => {
         // --- /unmute ---
         if (commandName === 'unmute') {
             if (!yetkiliMi(interaction.member)) return interaction.reply({ content: '❌ Bu komutu kullanmak için yetkili olmalısın.', ephemeral: true });
-            const kullanici = interaction.options.getMember('kullanıcı');
+            const kullanici = interaction.options.getMember('kullanici');
             
             if (!kullanici) return interaction.reply({ content: '❌ Kullanıcı bulunamadı.', ephemeral: true });
             
@@ -350,15 +349,15 @@ client.on('ready', async () => {
             name: 'mute',
             description: 'Kullanıcıyı belirtilen süre boyunca susturur.',
             options: [
-                { name: 'kullanıcı', description: 'Susturulacak kullanıcı', type: 6, required: true },
-                { name: 'süre', description: 'Süre (dakika)', type: 4, required: true },
+                { name: 'kullanici', description: 'Susturulacak kullanıcı', type: 6, required: true },
+                { name: 'sure', description: 'Süre (dakika)', type: 4, required: true },
                 { name: 'sebep', description: 'Susturma sebebi', type: 3, required: false }
             ]
         },
         {
             name: 'unmute',
             description: 'Kullanıcının susturmasını kaldırır.',
-            options: [{ name: 'kullanıcı', description: 'Susturması kaldırılacak kullanıcı', type: 6, required: true }]
+            options: [{ name: 'kullanici', description: 'Susturması kaldırılacak kullanıcı', type: 6, required: true }]
         },
         { name: 'zar', description: 'Zar atar.' },
         { name: 'yazitura', description: 'Yazı tura atar.' },
