@@ -1,5 +1,6 @@
 const { Client, GatewayIntentBits, Partials, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder } = require('discord.js');
-const { Akinator, AkinatorAnswerFlags } = require('discord.js-akinatör');
+// Türkçe karakter hatası düzeltildi (akinator)
+const akinator = require('discord.js-akinator');
 require('dotenv').config();
 
 const client = new Client({
@@ -84,8 +85,8 @@ client.on('interactionCreate', async interaction => {
             const yardimMetni = 
                 `📖 **MercimekNW Komut Listesi**\n\n` +
                 `👑 **Kurucu Komutları:**\n\`/destek-oluştur\` - Destek panelini gönderir\n\n` +
-                `🛠️ **Yetkili Komutları:**\n\`/sil [adet]\` - Mesajları siler\n\`/kilitle\` - Kanalı kilitler\n\`/ac\` - Kanal kilidini açar\n\`/ekle @kullanıcı\` - Ticket'a kullanıcı ekler\n\`/cikar @kullanıcı\` - Ticket'tan kullanıcı çıkarır\n\`/mute @kullanıcı [süre] [sebep]\` - Kullanıcıyı susturur (timeout)\n\`/unmute @kullanıcı\` - Kullanıcının susturmasını kaldırır\n\n` +
-                `🎮 **Oyun Komutları:**\n\`/zar\` - Zar atar\n\`/yazitura\` - Yazı tura atar\n\`/slot\` - Slot çevirir\n\`/8top\` - 8 top soru sorar\n\`/akinator\` - Akinatör oyununu başlatır\n\n` +
+                `🛠️ **Yetkili Komutları:**\n\`/sil [adet]\` - Mesajları siler\n\`/kilitle\` - Kanalı kilitler\n\`/ac\` - Kanal kilidini açar\n\`/ekle @kullanıcı\` - Ticket'a kullanıcı ekler\n\`/cikar @kullanıcı\` - Ticket'tan kullanıcı çıkarır\n\`/mute @kullanıcı [süre] [sebep]\` - Kullanıcıyı susturur (dakika)\n\`/unmute @kullanıcı\` - Kullanıcının susturmasını kaldırır\n\n` +
+                `🎮 **Oyun Komutları:**\n\`/zar\` - Zar atar\n\`/yazitura\` - Yazı tura atar\n\`/slot\` - Slot çevirir\n\`/8top [soru]\` - 8 top soru sorar\n\`/akinator\` - Akinatör oyununu başlatır\n\n` +
                 `🌐 **Genel:**\n\`/ip\` - Sunucu bilgilerini gösterir\n\`/yardim\` - Bu listeyi gösterir`;
             return interaction.reply({ content: yardimMetni, ephemeral: true });
         }
@@ -155,7 +156,7 @@ client.on('interactionCreate', async interaction => {
         if (commandName === 'mute') {
             if (!yetkiliMi(interaction.member)) return interaction.reply({ content: '❌ Bu komutu kullanmak için yetkili olmalısın.', ephemeral: true });
             const kullanici = interaction.options.getMember('kullanıcı');
-            const sure = interaction.options.getInteger('süre'); // dakika cinsinden
+            const sure = interaction.options.getInteger('süre'); // dakika
             const sebep = interaction.options.getString('sebep') || 'Sebep belirtilmedi';
             
             if (!kullanici) return interaction.reply({ content: '❌ Kullanıcı bulunamadı.', ephemeral: true });
@@ -222,79 +223,21 @@ client.on('interactionCreate', async interaction => {
             return interaction.reply({ content: `❓ **Soru:** ${soru}\n🎱 **Cevap:** ${cevap}` });
         }
 
+        // --- /akinator (Kütüphane kullanımı düzeltildi) ---
         if (commandName === 'akinator') {
-            // Akinatör başlatma
             try {
-                const akinator = new Akinator({
+                await akinator(interaction, {
                     language: 'tr',
                     childMode: false,
-                    gameType: 'character', // karakter veya hayvan/nesne
+                    gameType: 'character',
+                    useButtons: true,
+                    embedColor: '#FFA500'
                 });
-
-                await interaction.deferReply();
-                await akinator.start();
-                
-                const embed = new EmbedBuilder()
-                    .setTitle('🧞‍♂️ Akinatör')
-                    .setDescription(`**Soru 1:** ${akinator.question}`)
-                    .setColor('#FFA500')
-                    .setFooter({ text: `İlerleme: %${akinator.progress}` });
-
-                const row = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId('ak_yes').setLabel('Evet').setStyle(ButtonStyle.Success),
-                    new ButtonBuilder().setCustomId('ak_no').setLabel('Hayır').setStyle(ButtonStyle.Danger),
-                    new ButtonBuilder().setCustomId('ak_idk').setLabel('Bilmiyorum').setStyle(ButtonStyle.Secondary),
-                    new ButtonBuilder().setCustomId('ak_prob').setLabel('Muhtemelen').setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder().setCustomId('ak_nprob').setLabel('Muhtemelen Hayır').setStyle(ButtonStyle.Primary)
-                );
-
-                const msg = await interaction.editReply({ embeds: [embed], components: [row] });
-
-                // Buton dinleyicisi (Basit bir örnek, daha gelişmişini yapabilirsin)
-                const filter = i => i.user.id === interaction.user.id && i.message.id === msg.id;
-                const collector = msg.createMessageComponentCollector({ filter, time: 120000 });
-
-                collector.on('collect', async i => {
-                    let answerFlag;
-                    if (i.customId === 'ak_yes') answerFlag = AkinatorAnswerFlags.Yes;
-                    else if (i.customId === 'ak_no') answerFlag = AkinatorAnswerFlags.No;
-                    else if (i.customId === 'ak_idk') answerFlag = AkinatorAnswerFlags.DontKnow;
-                    else if (i.customId === 'ak_prob') answerFlag = AkinatorAnswerFlags.Probably;
-                    else if (i.customId === 'ak_nprob') answerFlag = AkinatorAnswerFlags.ProbablyNot;
-
-                    try {
-                        await akinator.answer(answerFlag);
-                        
-                        if (akinator.won) {
-                            const winEmbed = new EmbedBuilder()
-                                .setTitle('🧞‍♂️ Akinatör - Kazandım!')
-                                .setDescription(`Aklından geçen kişi **${akinator.name}** değil mi?`)
-                                .setThumbnail(akinator.photo)
-                                .setColor('#2ECC71');
-                            await i.update({ embeds: [winEmbed], components: [] });
-                            collector.stop();
-                        } else {
-                            const nextEmbed = new EmbedBuilder()
-                                .setTitle('🧞‍♂️ Akinatör')
-                                .setDescription(`**Soru ${akinator.currentStep + 1}:** ${akinator.question}`)
-                                .setColor('#FFA500')
-                                .setFooter({ text: `İlerleme: %${akinator.progress}` });
-                            await i.update({ embeds: [nextEmbed] });
-                        }
-                    } catch (error) {
-                        console.error(error);
-                        await i.reply({ content: 'Bir hata oluştu, oyunu yeniden başlatın.', ephemeral: true });
-                        collector.stop();
-                    }
-                });
-
-                collector.on('end', () => {
-                    interaction.editReply({ components: [] }).catch(() => {});
-                });
-
             } catch (error) {
                 console.error(error);
-                return interaction.editReply({ content: '❌ Akinatör başlatılırken bir hata oluştu.' });
+                if (!interaction.replied && !interaction.deferred) {
+                    await interaction.reply({ content: '❌ Akinatör başlatılırken bir hata oluştu.', ephemeral: true });
+                }
             }
         }
     }
