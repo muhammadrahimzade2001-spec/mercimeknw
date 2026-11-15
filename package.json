@@ -1,13 +1,14 @@
 {
   "name": "mercimeknw-bot",
   "version": "1.0.0",
-  "description": "MercimekNW Discord Destek Botu",
+  "description": "MercimekNW Discord Botu",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "discord.js": "^14.14.1",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "discord.js-akinatör": "^6.0.3"
   }
 }
