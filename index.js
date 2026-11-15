@@ -15,8 +15,8 @@ const SUNUCU_IP = "play.mercimeknw.com.tr";
 const SUNUCU_SURUM = "1.20.1x";
 const SUNUCU_MOD = "BoxPvP";
 
-// GIF BURADA (Kendi GIF'in varsa buraya linkini yapıştır)
-const CALISAN_GIF = "https://cdn.discordapp.com/attachments/1114828090680356935/1174320778513788938/discord-banner.gif"; 
+// SENİN VERDİĞİN GIF
+const GIF_URL = "https://i.imgur.com/3LLNakg.gif"; 
 
 // BURAYA SUNUCU ID'Nİ YAZ
 const SUNUCU_ID = "123456789012345678"; 
@@ -48,64 +48,74 @@ client.on('interactionCreate', async interaction => {
         if (interaction.isChatInputCommand()) {
             const { commandName } = interaction;
 
+            // --- /destek-oluştur ---
             if (commandName === 'destek-oluştur') {
                 if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
                     return interaction.reply({ content: 'Kanka bu komutu sadece kurucular kullanabilir.', ephemeral: true });
                 }
 
                 const panelEmbed = new EmbedBuilder()
-                    .setTitle('Mercimek Network | Destek')
+                    .setTitle('Mercimek Network Destek')
                     .setDescription(
-                        `Selamlar! Destek talebi oluşturmak için aşağıdaki menüyü kullanabilirsin.\n\n` +
-                        `**Dikkat Etmen Gerekenler:**\n` +
-                        `• Açtığın bileti 24 saat içinde takip etmelisin.\n` +
-                        `• Yetkililere DM'den ulaşmak yerine bilet açın.\n` +
-                        `• Lütfen sorununu açık ve net bir şekilde anlat.\n\n` +
-                        `*İyi oyunlar dileriz!*`
+                        `Bilet oluşturmadan önce aşağıdaki kuralları okuyunuz. Aşağıdaki butonlardan size uygun kategoriyi seçerek destek talebi oluşturabilirsiniz.\n\n` +
+                        `**Genel Kurallar:**\n` +
+                        `• Biletinizi 24 saat içerisinde kontrol etmek zorundasınız.\n` +
+                        `• Yönetim üyelerine özel mesaj atmaktan kaçının.\n` +
+                        `• Sorunlarınızı bilet aracılığıyla iletişim kurun.\n\n` +
+                        `**Sorun Bildirimi:**\n` +
+                        `• Sorunu detaylı bir şekilde açıklayın.\n` +
+                        `• Gerekli bilgileri eksiksiz paylaşın.`
                     )
-                    .setColor('#2b2d31') // Discord'un koyu arka plan rengi (Daha doğal durması için)
-                    .setImage(CALISAN_GIF)
-                    .setFooter({ text: 'MercimekNW • Destek Sistemi', iconURL: client.user.displayAvatarURL() });
+                    .setColor('#2b2d31') // Discord arka plan rengi, göze hoş görünür
+                    .setImage(GIF_URL)   // İşte senin GIF'in burada
+                    .setFooter({ text: 'Powered by MercimekNW', iconURL: client.user.displayAvatarURL() })
+                    .setTimestamp();
 
                 const menu = new StringSelectMenuBuilder()
                     .setCustomId('ticket_menu')
-                    .setPlaceholder('Kategori seç ve bilet oluştur...')
+                    .setPlaceholder('Destek kategorisi seçin...')
                     .addOptions(TICKET_KATEGORILERI.map(k => ({
                         label: k.label, value: k.value, emoji: k.emoji, description: k.desc
                     })));
 
                 const row = new ActionRowBuilder().addComponents(menu);
                 await interaction.channel.send({ embeds: [panelEmbed], components: [row] });
-                return interaction.reply({ content: 'Destek paneli gönderildi kanka.', ephemeral: true });
+                return interaction.reply({ content: 'Destek paneli başarıyla gönderildi.', ephemeral: true });
             }
 
+            // --- /ip ---
             if (commandName === 'ip') {
-                return interaction.reply({ content: `Sunucu IP'miz: \`${SUNUCU_IP}\`\nSürüm: \`${SUNUCU_SURUM}\`\nMod: \`${SUNUCU_MOD}\`\n\nHemen gel, seni bekliyoruz!` });
+                return interaction.reply({ content: `**MercimekNW Sunucu Bilgileri**\n\nIP: \`${SUNUCU_IP}\`\nSürüm: \`${SUNUCU_SURUM}\`\nMod: \`${SUNUCU_MOD}\`` });
             }
 
+            // --- /yardim ---
             if (commandName === 'yardim') {
-                return interaction.reply({ content: `**Komutlar:**\n/sil [adet]\n/kilitle\n/ac\n/ekle @kullanıcı\n/cikar @kullanıcı\n/mute @kullanıcı [süre]\n/unmute @kullanıcı\n/zar\n/yazitura\n/slot\n/8top\n/akinator` , ephemeral: true});
+                return interaction.reply({ content: `**Mevcut Komutlar:**\n\n/destek-oluştur\n/ip\n/sil [adet]\n/kilitle\n/ac\n/ekle @kullanıcı\n/cikar @kullanıcı` , ephemeral: true});
             }
 
+            // --- /sil ---
             if (commandName === 'sil') {
                 if (!yetkiliMi(interaction.member)) return interaction.reply({ content: 'Bunu yapmak için yetkin yok.', ephemeral: true });
                 const adet = interaction.options.getInteger('adet') ?? 100;
                 const silinen = await interaction.channel.bulkDelete(adet, true);
-                return interaction.reply({ content: `${silinen.size} mesajı temizledim.`, ephemeral: true });
+                return interaction.reply({ content: `${silinen.size} mesajı sildim.`, ephemeral: true });
             }
 
+            // --- /kilitle ---
             if (commandName === 'kilitle') {
                 if (!yetkiliMi(interaction.member)) return interaction.reply({ content: 'Bunu yapmak için yetkin yok.', ephemeral: true });
                 await interaction.channel.permissionOverwrites.edit(interaction.guild.id, { SendMessages: false });
                 return interaction.reply({ content: `Kanalı kilitledim.` });
             }
 
+            // --- /ac ---
             if (commandName === 'ac') {
                 if (!yetkiliMi(interaction.member)) return interaction.reply({ content: 'Bunu yapmak için yetkin yok.', ephemeral: true });
                 await interaction.channel.permissionOverwrites.edit(interaction.guild.id, { SendMessages: null });
                 return interaction.reply({ content: `Kanalın kilidini açtım.` });
             }
 
+            // --- /ekle ---
             if (commandName === 'ekle') {
                 if (!ticketMi(interaction.channel)) return interaction.reply({ content: 'Bu komut sadece bilet kanallarında çalışır.', ephemeral: true });
                 if (!yetkiliMi(interaction.member)) return interaction.reply({ content: 'Bunu yapmak için yetkin yok.', ephemeral: true });
@@ -114,65 +124,13 @@ client.on('interactionCreate', async interaction => {
                 return interaction.reply({ content: `${kullanici} kişisini bilete ekledim.` });
             }
 
+            // --- /cikar ---
             if (commandName === 'cikar') {
                 if (!ticketMi(interaction.channel)) return interaction.reply({ content: 'Bu komut sadece bilet kanallarında çalışır.', ephemeral: true });
                 if (!yetkiliMi(interaction.member)) return interaction.reply({ content: 'Bunu yapmak için yetkin yok.', ephemeral: true });
                 const kullanici = interaction.options.getUser('kullanıcı');
                 await interaction.channel.permissionOverwrites.delete(kullanici.id);
                 return interaction.reply({ content: `${kullanici} kişisini biletten çıkardım.` });
-            }
-
-            if (commandName === 'mute') {
-                if (!yetkiliMi(interaction.member)) return interaction.reply({ content: 'Bunu yapmak için yetkin yok.', ephemeral: true });
-                const kullanici = interaction.options.getMember('kullanici');
-                const sure = interaction.options.getInteger('sure');
-                const sebep = interaction.options.getString('sebep') || 'Sebep belirtilmedi';
-                if (!kullanici) return interaction.reply({ content: 'Kullanıcıyı bulamadım.', ephemeral: true });
-                
-                await kullanici.timeout(sure * 60 * 1000, sebep);
-                return interaction.reply({ content: `${kullanici.user.tag} adlı kişiyi ${sure} dakika susturdum. Sebep: ${sebep}` });
-            }
-
-            if (commandName === 'unmute') {
-                if (!yetkiliMi(interaction.member)) return interaction.reply({ content: 'Bunu yapmak için yetkin yok.', ephemeral: true });
-                const kullanici = interaction.options.getMember('kullanici');
-                if (!kullanici) return interaction.reply({ content: 'Kullanıcıyı bulamadım.', ephemeral: true });
-                
-                await kullanici.timeout(null);
-                return interaction.reply({ content: `${kullanici.user.tag} adlı kişinin susturmasını kaldırdım.` });
-            }
-
-            if (commandName === 'zar') {
-                return interaction.reply({ content: `Zar attım: **${Math.floor(Math.random() * 6) + 1}**` });
-            }
-            
-            if (commandName === 'yazitura') {
-                return interaction.reply({ content: `Para attım: **${Math.random() < 0.5 ? 'Yazı' : 'Tura'}**` });
-            }
-
-            if (commandName === 'slot') {
-                const emojiler = ['🍒', '🍋', '🍊', '🍇', '💎', '7️⃣'];
-                const s1 = emojiler[Math.floor(Math.random() * emojiler.length)];
-                const s2 = emojiler[Math.floor(Math.random() * emojiler.length)];
-                const s3 = emojiler[Math.floor(Math.random() * emojiler.length)];
-                let mesaj = `**[ ${s1} | ${s2} | ${s3} ]**\n`;
-                if (s1 === s2 && s2 === s3) mesaj += `JACKPOT! Büyük vurgun yaptın!`;
-                else if (s1 === s2 || s2 === s3 || s1 === s3) mesaj += `Tebrikler, ufak bir ikramiye kaptın!`;
-                else mesaj += `Maalesef kaybettin, bir daha dene.`;
-                return interaction.reply({ content: mesaj });
-            }
-
-            if (commandName === '8top') {
-                const sorular = ['Kesinlikle evet.', 'Hayır.', 'Bence öyle.', 'Pek sanmıyorum.', 'Kesinlikle hayır.', 'Evet.', 'Belki...', 'Şu an cevap veremem.', 'Bence bunu sormalısın.', 'İyi görünüyor.'];
-                return interaction.reply({ content: `**Soru:** ${interaction.options.getString('soru')}\n**Cevap:** ${sorular[Math.floor(Math.random() * sorular.length)]}` });
-            }
-
-            if (commandName === 'akinator') {
-                const row = new ActionRowBuilder().addComponents(
-                    new ButtonBuilder().setCustomId('ak_evet').setLabel('Evet').setStyle(ButtonStyle.Success),
-                    new ButtonBuilder().setCustomId('ak_hayir').setLabel('Hayır').setStyle(ButtonStyle.Danger)
-                );
-                return interaction.reply({ content: `Aklından bir ünlü mü geçiriyorsun?`, components: [row] });
             }
         }
 
@@ -229,10 +187,6 @@ client.on('interactionCreate', async interaction => {
                 await interaction.channel.permissionOverwrites.edit(interaction.guild.id, { SendMessages: false });
                 return interaction.reply({ content: 'Bilet kilitlendi.' });
             }
-            
-            if (interaction.customId === 'ak_evet' || interaction.customId === 'ak_hayir') {
-                return interaction.reply({ content: 'Seni anladım! Ama ben sadece bir simülasyonum, doğru cevap: **Bilemedim!** 😅', ephemeral: true });
-            }
         }
     } catch (error) {
         console.error(error);
@@ -252,14 +206,7 @@ client.on('ready', async () => {
         { name: 'kilitle', description: 'Kanalı kilitler.' },
         { name: 'ac', description: 'Kanalın kilidini açar.' },
         { name: 'ekle', description: 'Ticket\'a kullanıcı ekler.', options: [{ name: 'kullanıcı', description: 'Kullanıcı', type: 6, required: true }] },
-        { name: 'cikar', description: 'Ticket\'tan kullanıcı çıkarır.', options: [{ name: 'kullanıcı', description: 'Kullanıcı', type: 6, required: true }] },
-        { name: 'mute', description: 'Kullanıcıyı susturur.', options: [{ name: 'kullanici', description: 'Kullanıcı', type: 6, required: true }, { name: 'sure', description: 'Dakika', type: 4, required: true }, { name: 'sebep', description: 'Sebep', type: 3, required: false }] },
-        { name: 'unmute', description: 'Susturmayı kaldırır.', options: [{ name: 'kullanici', description: 'Kullanıcı', type: 6, required: true }] },
-        { name: 'zar', description: 'Zar atar.' },
-        { name: 'yazitura', description: 'Yazı tura atar.' },
-        { name: 'slot', description: 'Slot çevirir.' },
-        { name: '8top', description: 'Sihirli 8 top.', options: [{ name: 'soru', description: 'Sorun', type: 3, required: true }] },
-        { name: 'akinator', description: 'Akinatör oyununu başlatır.' }
+        { name: 'cikar', description: 'Ticket\'tan kullanıcı çıkarır.', options: [{ name: 'kullanıcı', description: 'Kullanıcı', type: 6, required: true }] }
     ];
 
     try {
