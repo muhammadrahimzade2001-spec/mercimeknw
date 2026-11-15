@@ -9,6 +9,6 @@
   "dependencies": {
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1",
-    "discord.js-akinatör": "^6.0.3"
+    "discord.js-akinator": "^5.0.1"
   }
 }
