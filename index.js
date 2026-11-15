@@ -1,4 +1,5 @@
 const { Client, GatewayIntentBits, Partials, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder } = require('discord.js');
+const { Akinator, AkinatorAnswerFlags } = require('discord.js-akinatör');
 require('dotenv').config();
 
 const client = new Client({
@@ -15,148 +16,21 @@ const client = new Client({
 const SUNUCU_IP = "play.mercimeknw.com.tr";
 const SUNUCU_SURUM = "1.20.1x";
 const SUNUCU_MOD = "BoxPvP";
-const SUNUCU_BANNER = "https://i.imgur.com/8Q5X7yG.png"; // Kendi banner'ını koyabilirsin
-
-// --- RENKLER ---
-const RENK = {
-    ana: '#FFA500',
-    basari: '#2ECC71',
-    hata: '#E74C3C',
-    bilgi: '#3498DB',
-    kilit: '#9B59B6',
-    kapat: '#E67E22',
-    koyu: '#2C3E50'
-};
 
 // --- TICKET KATEGORİLERİ ---
 const TICKET_KATEGORILERI = [
-    {
-        label: 'Genel Destek',
-        value: 'genel',
-        emoji: '❓',
-        desc: 'Genel sorularınız için.',
-        aciklama: 'Sunucu, oyun veya genel konularda yardım almak için buradasın. Sorununu detaylıca anlat, yetkililer en kısa sürede ilgilenecek.'
-    },
-    {
-        label: 'Yetkili Şikayet',
-        value: 'yetkili_sikayet',
-        emoji: '👮',
-        desc: 'Yetkililer hakkında şikayet.',
-        aciklama: 'Bir yetkilinin davranışını şikayet etmek için buradasın. Lütfen yetkilinin adını, olayın ne olduğunu ve varsa kanıtları (ekran görüntüsü) paylaş.'
-    },
-    {
-        label: 'Oyuncu Şikayet',
-        value: 'oyuncu_sikayet',
-        emoji: '😡',
-        desc: 'Kural bozan oyuncuları bildir.',
-        aciklama: 'Kural ihlali yapan bir oyuncuyu bildirmek için buradasın. Oyuncunun adını, ihlalin ne olduğunu ve varsa kanıtları paylaş.'
-    },
-    {
-        label: 'Hile Bildirimi',
-        value: 'hile',
-        emoji: '🚫',
-        desc: 'Hile kullananları raporla.',
-        aciklama: 'Hile kullanan bir oyuncuyu bildirmek için buradasın. Oyuncunun adını, hangi hileyi kullandığını ve varsa video/ekran görüntüsü kanıtlarını paylaş.'
-    },
-    {
-        label: 'İade Talebi',
-        value: 'iade',
-        emoji: '💸',
-        desc: 'Kayıp eşya/donate iadesi.',
-        aciklama: 'Kayıp eşya, donate veya benzeri bir iade talebin için buradasın. Ne kaybettiğini, ne zaman kaybettiğini ve varsa kanıtları paylaş.'
-    },
-    {
-        label: 'Ban İtiraz',
-        value: 'ban_itiraz',
-        emoji: '🔨',
-        desc: 'Yasaklamanız için itiraz.',
-        aciklama: 'Bir yasaklama (ban) için itiraz etmek için buradasın. Ban sebebini, banlayan yetkiliyi ve neden itiraz ettiğini detaylıca anlat.'
-    },
-    {
-        label: 'Yetkili Başvuru',
-        value: 'yetkili_basvuru',
-        emoji: '📝',
-        desc: 'Ekibe katılmak için başvur.',
-        aciklama: 'MercimekNW ekibine katılmak için başvuru yapıyorsun. Yaşını, oyun deneyimini, neden başvurduğunu ve ne kadar aktif olabileceğini anlat.'
-    },
-    {
-        label: 'Donate',
-        value: 'donate',
-        emoji: '💎',
-        desc: 'Donate satın alma ve sorunları.',
-        aciklama: 'Donate satın alma, teslimat sorunu veya donate ile ilgili diğer konular için buradasın. Satın alma bilgilerini ve sorununu detaylıca anlat.'
-    },
+    { label: 'Genel Destek', value: 'genel', emoji: '❓', desc: 'Genel sorularınız için.' },
+    { label: 'Yetkili Şikayet', value: 'yetkili_sikayet', emoji: '👮', desc: 'Yetkililer hakkında şikayet.' },
+    { label: 'Oyuncu Şikayet', value: 'oyuncu_sikayet', emoji: '😡', desc: 'Kural bozan oyuncuları bildir.' },
+    { label: 'Hile Bildirimi', value: 'hile', emoji: '🚫', desc: 'Hile kullananları raporla.' },
+    { label: 'İade Talebi', value: 'iade', emoji: '💸', desc: 'Kayıp eşya/donate iadesi.' },
+    { label: 'Ban İtiraz', value: 'ban_itiraz', emoji: '🔨', desc: 'Yasaklamanız için itiraz.' },
+    { label: 'Yetkili Başvuru', value: 'yetkili_basvuru', emoji: '📝', desc: 'Ekibe katılmak için başvur.' },
+    { label: 'Donate', value: 'donate', emoji: '💎', desc: 'Donate satın alma ve sorunları.' },
 ];
 
-// --- YARDIMCI FONKSİYONLAR ---
-function ticketMi(channel) {
-    return channel.name.startsWith('ticket-');
-}
-
-function yetkiliMi(member) {
-    return member.permissions.has(PermissionFlagsBits.ManageChannels);
-}
-
-function hataEmbed(mesaj) {
-    return new EmbedBuilder()
-        .setDescription(`❌ ${mesaj}`)
-        .setColor(RENK.hata);
-}
-
-function basariEmbed(mesaj) {
-    return new EmbedBuilder()
-        .setDescription(`✅ ${mesaj}`)
-        .setColor(RENK.basari);
-}
-
-function bilgiEmbed(mesaj) {
-    return new EmbedBuilder()
-        .setDescription(`ℹ️ ${mesaj}`)
-        .setColor(RENK.bilgi);
-}
-
-// --- PANEL EMBED'İ ---
-function panelEmbed() {
-    return new EmbedBuilder()
-        .setAuthor({ name: 'MercimekNW • Destek Merkezi', iconURL: client.user.displayAvatarURL() })
-        .setTitle('🎫 Destek Talebi Oluştur')
-        .setDescription(
-            '**Hoş geldin!** Aşağıdaki menüden sana en uygun **destek kategorisini** seçerek yeni bir talep oluşturabilirsin.\n\n' +
-            '> 📌 **Not:** Lütfen talebini açmadan önce konuyla ilgili tüm detayları ve varsa kanıtları hazırla. Yetkililerimiz en kısa sürede ilgilenecek.\n\n' +
-            '**📂 Kategoriler:**\n' +
-            TICKET_KATEGORILERI.map(k => `${k.emoji} **${k.label}** — ${k.desc}`).join('\n')
-        )
-        .addFields(
-            { name: '📡 Sunucu IP', value: `\`${SUNUCU_IP}\``, inline: true },
-            { name: '🎮 Sürüm', value: `\`${SUNUCU_SURUM}\``, inline: true },
-            { name: '⚔️ Mod', value: `\`${SUNUCU_MOD}\``, inline: true }
-        )
-        .setColor(RENK.ana)
-        .setImage(SUNUCU_BANNER)
-        .setFooter({ text: 'MercimekNW • Destek Sistemi', iconURL: client.user.displayAvatarURL() })
-        .setTimestamp();
-}
-
-// --- TICKET KARŞILAMA EMBED'İ ---
-function ticketEmbed(kategori, kullanici) {
-    return new EmbedBuilder()
-        .setAuthor({ name: `MercimekNW • ${kategori.label}`, iconURL: client.user.displayAvatarURL() })
-        .setTitle(`${kategori.emoji} Destek Talebin Oluşturuldu`)
-        .setDescription(
-            `Merhaba ${kullanici}, destek talebin başarıyla oluşturuldu! 🎉\n\n` +
-            `**📋 Kategori:** ${kategori.emoji} ${kategori.label}\n\n` +
-            `**📝 Açıklama:**\n> ${kategori.aciklama}\n\n` +
-            `**⚠️ Önemli:** Lütfen talebini detaylıca anlat. Yetkililerimiz en kısa sürede ilgilenecek.`
-        )
-        .addFields(
-            { name: '👤 Talep Sahibi', value: `<@${kullanici.id}>`, inline: true },
-            { name: '📅 Oluşturulma', value: `<t:${Math.floor(Date.now() / 1000)}:R>`, inline: true },
-            { name: '📌 Durum', value: '🟢 Açık', inline: true }
-        )
-        .setColor(RENK.basari)
-        .setFooter({ text: 'MercimekNW • Destek Sistemi', iconURL: client.user.displayAvatarURL() })
-        .setTimestamp();
-}
+function ticketMi(channel) { return channel.name.startsWith('ticket-'); }
+function yetkiliMi(member) { return member.permissions.has(PermissionFlagsBits.ManageChannels); }
 
 client.once('ready', () => {
     console.log(`[MercimekNW] ${client.user.tag} olarak giriş yapıldı!`);
@@ -170,170 +44,257 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
         const { commandName } = interaction;
 
-        // --- /destek-oluştur ---
+        // --- /destek-oluştur (EMBEDSİZ, SADE TASARIM) ---
         if (commandName === 'destek-oluştur') {
             if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
-                return interaction.reply({ embeds: [hataEmbed('Bu komutu sadece kurucular kullanabilir.')], ephemeral: true });
+                return interaction.reply({ content: '❌ Bu komutu sadece kurucular kullanabilir.', ephemeral: true });
             }
+
+            const panelMetni = 
+                `📌 **Mercimek Network Destek**\n\n` +
+                `Bilet oluşturmadan önce aşağıdaki kuralları okuyunuz. Aşağıdaki butonlardan size uygun kategoriyi seçerek destek talebi oluşturabilirsiniz.\n\n` +
+                `**Genel Kurallar:**\n` +
+                `• Biletinizi 24 saat içerisinde kontrol etmek zorundasınız.\n` +
+                `• Yönetim üyelerine özel mesaj atmaktan kaçının.\n` +
+                `• Sorunlarınızı bilet aracılığıyla iletişim kurun.\n\n` +
+                `**Sorun Bildirimi:**\n` +
+                `• Sorunu detaylı bir şekilde açıklayın.\n` +
+                `• Gerekli bilgileri eksiksiz paylaşın.\n\n` +
+                `*Powered by MercimekNW*`;
 
             const menu = new StringSelectMenuBuilder()
                 .setCustomId('ticket_menu')
-                .setPlaceholder('🎫 Destek talebi kategorisi seçin...')
+                .setPlaceholder('Destek kategorisi seçin...')
                 .addOptions(TICKET_KATEGORILERI.map(k => ({
-                    label: k.label,
-                    value: k.value,
-                    emoji: k.emoji,
-                    description: k.desc
+                    label: k.label, value: k.value, emoji: k.emoji, description: k.desc
                 })));
 
             const row = new ActionRowBuilder().addComponents(menu);
-            await interaction.channel.send({ embeds: [panelEmbed()], components: [row] });
-            return interaction.reply({ embeds: [basariEmbed('Destek paneli başarıyla gönderildi.')], ephemeral: true });
+            await interaction.channel.send({ content: panelMetni, components: [row] });
+            return interaction.reply({ content: '✅ Destek paneli başarıyla gönderildi.', ephemeral: true });
         }
 
         // --- /ip ---
         if (commandName === 'ip') {
-            const embed = new EmbedBuilder()
-                .setAuthor({ name: 'MercimekNW', iconURL: client.user.displayAvatarURL() })
-                .setTitle('📡 Sunucu Bilgileri')
-                .setDescription('MercimekNW sunucusuna aşağıdaki bilgilerle katılabilirsin.')
-                .addFields(
-                    { name: '🌐 IP Adresi', value: `\`\`\`${SUNUCU_IP}\`\`\``, inline: false },
-                    { name: '🎮 Sürüm', value: `\`${SUNUCU_SURUM}\``, inline: true },
-                    { name: '⚔️ Mod', value: `\`${SUNUCU_MOD}\``, inline: true }
-                )
-                .setColor(RENK.ana)
-                .setFooter({ text: 'MercimekNW', iconURL: client.user.displayAvatarURL() })
-                .setTimestamp();
-            return interaction.reply({ embeds: [embed] });
+            return interaction.reply({ content: `📡 **MercimekNW Sunucu Bilgileri**\n\n🌐 **IP:** \`${SUNUCU_IP}\`\n🎮 **Sürüm:** \`${SUNUCU_SURUM}\`\n⚔️ **Mod:** \`${SUNUCU_MOD}\`` });
         }
 
         // --- /yardim ---
         if (commandName === 'yardim') {
-            const embed = new EmbedBuilder()
-                .setAuthor({ name: 'MercimekNW', iconURL: client.user.displayAvatarURL() })
-                .setTitle('📖 Komut Listesi')
-                .setDescription('Aşağıda MercimekNW botunun tüm komutlarını bulabilirsin.')
-                .addFields(
-                    {
-                        name: '👑 Kurucu Komutları',
-                        value: '`/destek-oluştur` — Destek panelini gönderir',
-                        inline: false
-                    },
-                    {
-                        name: '🛠️ Kanal Komutları (Yetkili)',
-                        value: '`/sil [adet]` — Mesajları siler\n`/kilitle` — Kanalı kilitler\n`/ac` — Kanal kilidini açar',
-                        inline: false
-                    },
-                    {
-                        name: '🎫 Ticket Komutları (Yetkili)',
-                        value: '`/ekle @kullanıcı` — Ticket\'a kullanıcı ekler\n`/cikar @kullanıcı` — Ticket\'tan kullanıcı çıkarır',
-                        inline: false
-                    },
-                    {
-                        name: '🌐 Genel',
-                        value: '`/ip` — Sunucu bilgilerini gösterir\n`/yardim` — Bu listeyi gösterir',
-                        inline: false
-                    }
-                )
-                .setColor(RENK.basari)
-                .setFooter({ text: 'MercimekNW', iconURL: client.user.displayAvatarURL() })
-                .setTimestamp();
-            return interaction.reply({ embeds: [embed], ephemeral: true });
+            const yardimMetni = 
+                `📖 **MercimekNW Komut Listesi**\n\n` +
+                `👑 **Kurucu Komutları:**\n\`/destek-oluştur\` - Destek panelini gönderir\n\n` +
+                `🛠️ **Yetkili Komutları:**\n\`/sil [adet]\` - Mesajları siler\n\`/kilitle\` - Kanalı kilitler\n\`/ac\` - Kanal kilidini açar\n\`/ekle @kullanıcı\` - Ticket'a kullanıcı ekler\n\`/cikar @kullanıcı\` - Ticket'tan kullanıcı çıkarır\n\`/mute @kullanıcı [süre] [sebep]\` - Kullanıcıyı susturur (timeout)\n\`/unmute @kullanıcı\` - Kullanıcının susturmasını kaldırır\n\n` +
+                `🎮 **Oyun Komutları:**\n\`/zar\` - Zar atar\n\`/yazitura\` - Yazı tura atar\n\`/slot\` - Slot çevirir\n\`/8top\` - 8 top soru sorar\n\`/akinator\` - Akinatör oyununu başlatır\n\n` +
+                `🌐 **Genel:**\n\`/ip\` - Sunucu bilgilerini gösterir\n\`/yardim\` - Bu listeyi gösterir`;
+            return interaction.reply({ content: yardimMetni, ephemeral: true });
         }
 
         // --- /sil ---
         if (commandName === 'sil') {
-            if (!yetkiliMi(interaction.member)) {
-                return interaction.reply({ embeds: [hataEmbed('Bu komutu kullanmak için yetkili olmalısın.')], ephemeral: true });
-            }
+            if (!yetkiliMi(interaction.member)) return interaction.reply({ content: '❌ Bu komutu kullanmak için yetkili olmalısın.', ephemeral: true });
             const adet = interaction.options.getInteger('adet') ?? 100;
-            if (adet < 1 || adet > 100) {
-                return interaction.reply({ embeds: [hataEmbed('Adet 1 ile 100 arasında olmalı.')], ephemeral: true });
-            }
+            if (adet < 1 || adet > 100) return interaction.reply({ content: '❌ Adet 1 ile 100 arasında olmalı.', ephemeral: true });
             try {
                 const silinen = await interaction.channel.bulkDelete(adet, true);
-                return interaction.reply({ embeds: [basariEmbed(`${silinen.size} mesaj silindi.`)], ephemeral: true });
+                return interaction.reply({ content: `✅ **${silinen.size}** mesaj silindi.`, ephemeral: true });
             } catch (e) {
-                return interaction.reply({ embeds: [hataEmbed('Mesajlar silinirken hata oluştu (14 günden eski mesajlar silinemez).')], ephemeral: true });
+                return interaction.reply({ content: '❌ Mesajlar silinirken hata oluştu (14 günden eski mesajlar silinemez).', ephemeral: true });
             }
         }
 
         // --- /kilitle ---
         if (commandName === 'kilitle') {
-            if (!yetkiliMi(interaction.member)) {
-                return interaction.reply({ embeds: [hataEmbed('Bu komutu kullanmak için yetkili olmalısın.')], ephemeral: true });
-            }
+            if (!yetkiliMi(interaction.member)) return interaction.reply({ content: '❌ Bu komutu kullanmak için yetkili olmalısın.', ephemeral: true });
             try {
                 await interaction.channel.permissionOverwrites.edit(interaction.guild.id, { SendMessages: false });
-                const embed = new EmbedBuilder()
-                    .setTitle('🔒 Kanal Kilitlendi')
-                    .setDescription(`Bu kanal **${interaction.user.tag}** tarafından kilitlendi.\n\n> Sadece yetkililer mesaj gönderebilir.`)
-                    .addFields({ name: '📅 Zaman', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false })
-                    .setColor(RENK.kilit)
-                    .setFooter({ text: 'MercimekNW', iconURL: client.user.displayAvatarURL() })
-                    .setTimestamp();
-                return interaction.reply({ embeds: [embed] });
+                return interaction.reply({ content: `🔒 Bu kanal **${interaction.user.tag}** tarafından kilitlendi. Sadece yetkililer mesaj gönderebilir.` });
             } catch (e) {
-                return interaction.reply({ embeds: [hataEmbed('Kilitleme sırasında hata oluştu.')], ephemeral: true });
+                return interaction.reply({ content: '❌ Kilitleme sırasında hata oluştu.', ephemeral: true });
             }
         }
 
         // --- /ac ---
         if (commandName === 'ac') {
-            if (!yetkiliMi(interaction.member)) {
-                return interaction.reply({ embeds: [hataEmbed('Bu komutu kullanmak için yetkili olmalısın.')], ephemeral: true });
-            }
+            if (!yetkiliMi(interaction.member)) return interaction.reply({ content: '❌ Bu komutu kullanmak için yetkili olmalısın.', ephemeral: true });
             try {
                 await interaction.channel.permissionOverwrites.edit(interaction.guild.id, { SendMessages: null });
-                const embed = new EmbedBuilder()
-                    .setTitle('🔓 Kanal Kilidi Açıldı')
-                    .setDescription(`Bu kanalın kilidi **${interaction.user.tag}** tarafından açıldı.\n\n> Artık herkes mesaj gönderebilir.`)
-                    .addFields({ name: '📅 Zaman', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: false })
-                    .setColor(RENK.basari)
-                    .setFooter({ text: 'MercimekNW', iconURL: client.user.displayAvatarURL() })
-                    .setTimestamp();
-                return interaction.reply({ embeds: [embed] });
+                return interaction.reply({ content: `🔓 Bu kanalın kilidi **${interaction.user.tag}** tarafından açıldı. Artık herkes mesaj gönderebilir.` });
             } catch (e) {
-                return interaction.reply({ embeds: [hataEmbed('Açma sırasında hata oluştu.')], ephemeral: true });
+                return interaction.reply({ content: '❌ Açma sırasında hata oluştu.', ephemeral: true });
             }
         }
 
         // --- /ekle ---
         if (commandName === 'ekle') {
-            if (!ticketMi(interaction.channel)) {
-                return interaction.reply({ embeds: [hataEmbed('Bu komut sadece ticket kanallarında kullanılabilir.')], ephemeral: true });
-            }
-            if (!yetkiliMi(interaction.member)) {
-                return interaction.reply({ embeds: [hataEmbed('Bu komutu kullanmak için yetkili olmalısın.')], ephemeral: true });
-            }
+            if (!ticketMi(interaction.channel)) return interaction.reply({ content: '❌ Bu komut sadece ticket kanallarında kullanılabilir.', ephemeral: true });
+            if (!yetkiliMi(interaction.member)) return interaction.reply({ content: '❌ Bu komutu kullanmak için yetkili olmalısın.', ephemeral: true });
             const kullanici = interaction.options.getUser('kullanıcı');
             try {
-                await interaction.channel.permissionOverwrites.edit(kullanici.id, {
-                    ViewChannel: true,
-                    SendMessages: true,
-                    ReadMessageHistory: true
-                });
-                return interaction.reply({ embeds: [basariEmbed(`${kullanici} ticket'a eklendi.`)] });
+                await interaction.channel.permissionOverwrites.edit(kullanici.id, { ViewChannel: true, SendMessages: true, ReadMessageHistory: true });
+                return interaction.reply({ content: `✅ ${kullanici} ticket'a eklendi.` });
             } catch (e) {
-                return interaction.reply({ embeds: [hataEmbed('Ekleme sırasında hata oluştu.')], ephemeral: true });
+                return interaction.reply({ content: '❌ Ekleme sırasında hata oluştu.', ephemeral: true });
             }
         }
 
         // --- /cikar ---
         if (commandName === 'cikar') {
-            if (!ticketMi(interaction.channel)) {
-                return interaction.reply({ embeds: [hataEmbed('Bu komut sadece ticket kanallarında kullanılabilir.')], ephemeral: true });
-            }
-            if (!yetkiliMi(interaction.member)) {
-                return interaction.reply({ embeds: [hataEmbed('Bu komutu kullanmak için yetkili olmalısın.')], ephemeral: true });
-            }
+            if (!ticketMi(interaction.channel)) return interaction.reply({ content: '❌ Bu komut sadece ticket kanallarında kullanılabilir.', ephemeral: true });
+            if (!yetkiliMi(interaction.member)) return interaction.reply({ content: '❌ Bu komutu kullanmak için yetkili olmalısın.', ephemeral: true });
             const kullanici = interaction.options.getUser('kullanıcı');
             try {
                 await interaction.channel.permissionOverwrites.delete(kullanici.id);
-                return interaction.reply({ embeds: [basariEmbed(`${kullanici} ticket'tan çıkarıldı.`)] });
+                return interaction.reply({ content: `✅ ${kullanici} ticket'tan çıkarıldı.` });
             } catch (e) {
-                return interaction.reply({ embeds: [hataEmbed('Çıkarma sırasında hata oluştu.')], ephemeral: true });
+                return interaction.reply({ content: '❌ Çıkarma sırasında hata oluştu.', ephemeral: true });
+            }
+        }
+
+        // --- /mute (Timeout) ---
+        if (commandName === 'mute') {
+            if (!yetkiliMi(interaction.member)) return interaction.reply({ content: '❌ Bu komutu kullanmak için yetkili olmalısın.', ephemeral: true });
+            const kullanici = interaction.options.getMember('kullanıcı');
+            const sure = interaction.options.getInteger('süre'); // dakika cinsinden
+            const sebep = interaction.options.getString('sebep') || 'Sebep belirtilmedi';
+            
+            if (!kullanici) return interaction.reply({ content: '❌ Kullanıcı bulunamadı.', ephemeral: true });
+            
+            try {
+                await kullanici.timeout(sure * 60 * 1000, sebep);
+                return interaction.reply({ content: `🔇 ${kullanici.user.tag} adlı kullanıcı **${sure} dakika** boyunca susturuldu.\n**Sebep:** ${sebep}` });
+            } catch (e) {
+                return interaction.reply({ content: '❌ Susturma işlemi başarısız oldu. Kullanıcının rolü benden yüksek olabilir.', ephemeral: true });
+            }
+        }
+
+        // --- /unmute ---
+        if (commandName === 'unmute') {
+            if (!yetkiliMi(interaction.member)) return interaction.reply({ content: '❌ Bu komutu kullanmak için yetkili olmalısın.', ephemeral: true });
+            const kullanici = interaction.options.getMember('kullanıcı');
+            
+            if (!kullanici) return interaction.reply({ content: '❌ Kullanıcı bulunamadı.', ephemeral: true });
+            
+            try {
+                await kullanici.timeout(null);
+                return interaction.reply({ content: `🔊 ${kullanici.user.tag} adlı kullanıcının susturması kaldırıldı.` });
+            } catch (e) {
+                return interaction.reply({ content: '❌ Susturma kaldırma işlemi başarısız oldu.', ephemeral: true });
+            }
+        }
+
+        // --- OYUN KOMUTLARI ---
+        if (commandName === 'zar') {
+            const sonuc = Math.floor(Math.random() * 6) + 1;
+            return interaction.reply({ content: `🎲 Zar atıldı: **${sonuc}**` });
+        }
+
+        if (commandName === 'yazitura') {
+            const sonuc = Math.random() < 0.5 ? 'Yazı' : 'Tura';
+            return interaction.reply({ content: `🪙 Para atıldı: **${sonuc}**` });
+        }
+
+        if (commandName === 'slot') {
+            const emojiler = ['🍒', '🍋', '🍊', '🍇', '💎', '7️⃣'];
+            const s1 = emojiler[Math.floor(Math.random() * emojiler.length)];
+            const s2 = emojiler[Math.floor(Math.random() * emojiler.length)];
+            const s3 = emojiler[Math.floor(Math.random() * emojiler.length)];
+            
+            let mesaj = `🎰 **[ ${s1} | ${s2} | ${s3} ]**\n`;
+            if (s1 === s2 && s2 === s3) {
+                mesaj += `🎉 **JACKPOT! Büyük ikramiye kazandın!**`;
+            } else if (s1 === s2 || s2 === s3 || s1 === s3) {
+                mesaj += `✨ **Tebrikler, küçük ikramiye kazandın!**`;
+            } else {
+                mesaj += `😢 **Kaybettin, tekrar dene!**`;
+            }
+            return interaction.reply({ content: mesaj });
+        }
+
+        if (commandName === '8top') {
+            const sorular = [
+                'Kesinlikle evet.', 'Hayır.', 'Buna güvenebilirsin.', 'Pek sanmıyorum.', 
+                'Kesinlikle hayır.', 'Evet.', 'Belki...', 'Şu an cevap veremem.', 
+                'Konsantre ol ve tekrar sor.', 'Sonuç iyi görünüyor.', 'Bunu rüyanda gör.', 'Kesinlikle!'
+            ];
+            const soru = interaction.options.getString('soru');
+            const cevap = sorular[Math.floor(Math.random() * sorular.length)];
+            return interaction.reply({ content: `❓ **Soru:** ${soru}\n🎱 **Cevap:** ${cevap}` });
+        }
+
+        if (commandName === 'akinator') {
+            // Akinatör başlatma
+            try {
+                const akinator = new Akinator({
+                    language: 'tr',
+                    childMode: false,
+                    gameType: 'character', // karakter veya hayvan/nesne
+                });
+
+                await interaction.deferReply();
+                await akinator.start();
+                
+                const embed = new EmbedBuilder()
+                    .setTitle('🧞‍♂️ Akinatör')
+                    .setDescription(`**Soru 1:** ${akinator.question}`)
+                    .setColor('#FFA500')
+                    .setFooter({ text: `İlerleme: %${akinator.progress}` });
+
+                const row = new ActionRowBuilder().addComponents(
+                    new ButtonBuilder().setCustomId('ak_yes').setLabel('Evet').setStyle(ButtonStyle.Success),
+                    new ButtonBuilder().setCustomId('ak_no').setLabel('Hayır').setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId('ak_idk').setLabel('Bilmiyorum').setStyle(ButtonStyle.Secondary),
+                    new ButtonBuilder().setCustomId('ak_prob').setLabel('Muhtemelen').setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder().setCustomId('ak_nprob').setLabel('Muhtemelen Hayır').setStyle(ButtonStyle.Primary)
+                );
+
+                const msg = await interaction.editReply({ embeds: [embed], components: [row] });
+
+                // Buton dinleyicisi (Basit bir örnek, daha gelişmişini yapabilirsin)
+                const filter = i => i.user.id === interaction.user.id && i.message.id === msg.id;
+                const collector = msg.createMessageComponentCollector({ filter, time: 120000 });
+
+                collector.on('collect', async i => {
+                    let answerFlag;
+                    if (i.customId === 'ak_yes') answerFlag = AkinatorAnswerFlags.Yes;
+                    else if (i.customId === 'ak_no') answerFlag = AkinatorAnswerFlags.No;
+                    else if (i.customId === 'ak_idk') answerFlag = AkinatorAnswerFlags.DontKnow;
+                    else if (i.customId === 'ak_prob') answerFlag = AkinatorAnswerFlags.Probably;
+                    else if (i.customId === 'ak_nprob') answerFlag = AkinatorAnswerFlags.ProbablyNot;
+
+                    try {
+                        await akinator.answer(answerFlag);
+                        
+                        if (akinator.won) {
+                            const winEmbed = new EmbedBuilder()
+                                .setTitle('🧞‍♂️ Akinatör - Kazandım!')
+                                .setDescription(`Aklından geçen kişi **${akinator.name}** değil mi?`)
+                                .setThumbnail(akinator.photo)
+                                .setColor('#2ECC71');
+                            await i.update({ embeds: [winEmbed], components: [] });
+                            collector.stop();
+                        } else {
+                            const nextEmbed = new EmbedBuilder()
+                                .setTitle('🧞‍♂️ Akinatör')
+                                .setDescription(`**Soru ${akinator.currentStep + 1}:** ${akinator.question}`)
+                                .setColor('#FFA500')
+                                .setFooter({ text: `İlerleme: %${akinator.progress}` });
+                            await i.update({ embeds: [nextEmbed] });
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        await i.reply({ content: 'Bir hata oluştu, oyunu yeniden başlatın.', ephemeral: true });
+                        collector.stop();
+                    }
+                });
+
+                collector.on('end', () => {
+                    interaction.editReply({ components: [] }).catch(() => {});
+                });
+
+            } catch (error) {
+                console.error(error);
+                return interaction.editReply({ content: '❌ Akinatör başlatılırken bir hata oluştu.' });
             }
         }
     }
@@ -348,7 +309,7 @@ client.on('interactionCreate', async interaction => {
         );
 
         if (mevcutKanal) {
-            return interaction.reply({ embeds: [hataEmbed(`Zaten açık bir ticketin var: <#${mevcutKanal.id}>`)], ephemeral: true });
+            return interaction.reply({ content: `❌ Zaten açık bir ticketin var: <#${mevcutKanal.id}>`, ephemeral: true });
         }
 
         try {
@@ -360,100 +321,50 @@ client.on('interactionCreate', async interaction => {
                 permissionOverwrites: [
                     { id: interaction.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
                     { id: interaction.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
-                    // Yetkili rol ID'sini buraya yaz:
-                    // { id: 'YETKILI_ROL_ID', allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
                 ],
             });
 
             const butonlar = new ActionRowBuilder().addComponents(
                 new ButtonBuilder().setCustomId('ticket_kapat').setLabel('Talebi Kapat').setEmoji('🔒').setStyle(ButtonStyle.Danger),
-                new ButtonBuilder().setCustomId('ticket_kilitle').setLabel('Kilitle').setEmoji('🔐').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId('ticket_bilgi').setLabel('Bilgi').setEmoji('ℹ️').setStyle(ButtonStyle.Primary)
+                new ButtonBuilder().setCustomId('ticket_kilitle').setLabel('Kilitle').setEmoji('🔐').setStyle(ButtonStyle.Secondary)
             );
 
-            await ticketKanal.send({ content: `<@${interaction.user.id}>`, embeds: [ticketEmbed(kategori, interaction.user)], components: [butonlar] });
-            await interaction.reply({ embeds: [basariEmbed(`Destek talebin oluşturuldu: <#${ticketKanal.id}>`)], ephemeral: true });
+            const ticketMetni = 
+                `👋 Merhaba ${interaction.user}, destek talebin oluşturuldu!\n\n` +
+                `📋 **Kategori:** ${kategori.emoji} ${kategori.label}\n\n` +
+                `⚠️ **Önemli:** Lütfen talebini detaylıca anlat. Yetkililerimiz en kısa sürede ilgilenecek.`;
+
+            await ticketKanal.send({ content: `<@${interaction.user.id}>`, content: ticketMetni, components: [butonlar] });
+            await interaction.reply({ content: `✅ Destek talebin oluşturuldu: <#${ticketKanal.id}>`, ephemeral: true });
 
         } catch (error) {
             console.error(error);
-            await interaction.reply({ embeds: [hataEmbed('Ticket oluşturulurken bir hata oluştu.')], ephemeral: true });
+            await interaction.reply({ content: '❌ Ticket oluşturulurken bir hata oluştu.', ephemeral: true });
         }
     }
 
     // ========== BUTONLAR ==========
     if (interaction.isButton()) {
-        // --- Kapat ---
         if (interaction.customId === 'ticket_kapat') {
             if (!yetkiliMi(interaction.member) && interaction.channel.name !== `ticket-${interaction.user.username}`) {
-                return interaction.reply({ embeds: [hataEmbed('Bu ticketi kapatma yetkin yok.')], ephemeral: true });
+                return interaction.reply({ content: '❌ Bu ticketi kapatma yetkin yok.', ephemeral: true });
             }
-
-            const onayEmbed = new EmbedBuilder()
-                .setTitle('🔒 Ticket Kapatma Onayı')
-                .setDescription('Bu ticketi kapatmak istediğine emin misin?\n\n> Kapatıldıktan sonra kanal **5 saniye** içinde silinecek ve geri alınamayacak.')
-                .setColor(RENK.kapat)
-                .setFooter({ text: 'MercimekNW', iconURL: client.user.displayAvatarURL() })
-                .setTimestamp();
-
-            const onayButonlari = new ActionRowBuilder().addComponents(
-                new ButtonBuilder().setCustomId('ticket_kapat_onay').setLabel('Evet, Kapat').setEmoji('✅').setStyle(ButtonStyle.Danger),
-                new ButtonBuilder().setCustomId('ticket_kapat_iptal').setLabel('İptal').setEmoji('❌').setStyle(ButtonStyle.Secondary)
-            );
-
-            return interaction.reply({ embeds: [onayEmbed], components: [onayButonlari] });
-        }
-
-        // --- Kapat onay ---
-        if (interaction.customId === 'ticket_kapat_onay') {
-            await interaction.update({
-                embeds: [new EmbedBuilder().setDescription('🔒 Ticket kapatılıyor...').setColor(RENK.kapat)],
-                components: []
-            });
+            await interaction.reply({ content: '🔒 Ticket 5 saniye içinde kapatılıyor...' });
             setTimeout(async () => {
                 try { await interaction.channel.delete(); } catch (e) { console.log('Kanal silinemedi.'); }
             }, 5000);
         }
 
-        // --- Kapat iptal ---
-        if (interaction.customId === 'ticket_kapat_iptal') {
-            return interaction.update({
-                embeds: [new EmbedBuilder().setDescription('❌ Kapatma işlemi iptal edildi.').setColor(RENK.bilgi)],
-                components: []
-            });
-        }
-
-        // --- Kilitle ---
         if (interaction.customId === 'ticket_kilitle') {
             if (!yetkiliMi(interaction.member)) {
-                return interaction.reply({ embeds: [hataEmbed('Bu butonu kullanma yetkin yok.')], ephemeral: true });
+                return interaction.reply({ content: '❌ Bu butonu kullanma yetkin yok.', ephemeral: true });
             }
             try {
                 await interaction.channel.permissionOverwrites.edit(interaction.guild.id, { SendMessages: false });
-                const embed = new EmbedBuilder()
-                    .setTitle('🔐 Ticket Kilitlendi')
-                    .setDescription(`Bu ticket **${interaction.user.tag}** tarafından kilitlendi.\n\n> Sadece yetkililer mesaj gönderebilir.`)
-                    .setColor(RENK.kilit)
-                    .setFooter({ text: 'MercimekNW', iconURL: client.user.displayAvatarURL() })
-                    .setTimestamp();
-                await interaction.reply({ embeds: [embed] });
+                await interaction.reply({ content: '🔐 Ticket kanalı kilitlendi.' });
             } catch (e) {
-                await interaction.reply({ embeds: [hataEmbed('Kilitleme sırasında hata oluştu.')], ephemeral: true });
+                await interaction.reply({ content: '❌ Kilitleme sırasında hata oluştu.', ephemeral: true });
             }
-        }
-
-        // --- Bilgi ---
-        if (interaction.customId === 'ticket_bilgi') {
-            const embed = new EmbedBuilder()
-                .setTitle('ℹ️ Ticket Bilgileri')
-                .addFields(
-                    { name: '📋 Kanal', value: `<#${interaction.channel.id}>`, inline: true },
-                    { name: '👤 Açan', value: `<@${interaction.channel.permissionOverwrites.cache.find(p => p.type === 1)?.id || interaction.user.id}>`, inline: true },
-                    { name: '📅 Oluşturulma', value: `<t:${Math.floor(interaction.channel.createdTimestamp / 1000)}:R>`, inline: true }
-                )
-                .setColor(RENK.bilgi)
-                .setFooter({ text: 'MercimekNW', iconURL: client.user.displayAvatarURL() })
-                .setTimestamp();
-            return interaction.reply({ embeds: [embed], ephemeral: true });
         }
     }
 });
@@ -480,7 +391,30 @@ client.on('ready', async () => {
             name: 'cikar',
             description: 'Ticket kanalından kullanıcı çıkarır.',
             options: [{ name: 'kullanıcı', description: 'Çıkarılacak kullanıcı', type: 6, required: true }]
-        }
+        },
+        {
+            name: 'mute',
+            description: 'Kullanıcıyı belirtilen süre boyunca susturur.',
+            options: [
+                { name: 'kullanıcı', description: 'Susturulacak kullanıcı', type: 6, required: true },
+                { name: 'süre', description: 'Süre (dakika)', type: 4, required: true },
+                { name: 'sebep', description: 'Susturma sebebi', type: 3, required: false }
+            ]
+        },
+        {
+            name: 'unmute',
+            description: 'Kullanıcının susturmasını kaldırır.',
+            options: [{ name: 'kullanıcı', description: 'Susturması kaldırılacak kullanıcı', type: 6, required: true }]
+        },
+        { name: 'zar', description: 'Zar atar.' },
+        { name: 'yazitura', description: 'Yazı tura atar.' },
+        { name: 'slot', description: 'Slot makinesini çevirir.' },
+        {
+            name: '8top',
+            description: 'Sihirli 8 topa soru sorarsınız.',
+            options: [{ name: 'soru', description: 'Sorunuz', type: 3, required: true }]
+        },
+        { name: 'akinator', description: 'Akinatör oyununu başlatır.' }
     ];
 
     try {
