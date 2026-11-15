@@ -324,6 +324,9 @@ client.on('interactionCreate', async interaction => {
 
 // ========== KOMUT KAYIT ==========
 client.on('ready', async () => {
+    // BURAYA SUNUCUNUN ID'SİNİ YAZ (Örnek: "115987456123456789")
+    const SUNUCU_ID = "BURAYA_SUNUCU_ID_YAZ"; 
+
     const commands = [
         { name: 'destek-oluştur', description: 'MercimekNW destek panelini gönderir (sadece kurucular).' },
         { name: 'ip', description: 'MercimekNW sunucu bilgilerini gösterir.' },
@@ -371,11 +374,15 @@ client.on('ready', async () => {
     ];
 
     try {
-        await client.application.commands.set(commands);
-        console.log('Slash komutlar yüklendi.');
+        // Sadece belirtilen sunucuya komutları yükle (Anında düşer)
+        const guild = client.guilds.cache.get(SUNUCU_ID);
+        if (guild) {
+            await guild.commands.set(commands);
+            console.log(`✅ Komutlar başarıyla ${guild.name} sunucusuna yüklendi!`);
+        } else {
+            console.log(`❌ Bot ${SUNUCU_ID} ID'li sunucuda değil! Lütfen ID'yi kontrol et.`);
+        }
     } catch (error) {
         console.error('Komut yüklenirken hata:', error);
     }
 });
-
-client.login(process.env.TOKEN);
