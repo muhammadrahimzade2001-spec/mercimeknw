@@ -1,5 +1,4 @@
 const { Client, GatewayIntentBits, Partials, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder } = require('discord.js');
-// Türkçe karakter hatası düzeltildi (akinator)
 const akinator = require('discord.js-akinator');
 require('dotenv').config();
 
@@ -17,6 +16,10 @@ const client = new Client({
 const SUNUCU_IP = "play.mercimeknw.com.tr";
 const SUNUCU_SURUM = "1.20.1x";
 const SUNUCU_MOD = "BoxPvP";
+
+// --- GÖRSELLER (BURAYI KENDİNE GÖRE AYARLA) ---
+const LOGO_URL = "https://i.imgur.com/8Q5X7yG.png"; // Sağ üstteki küçük logo (İstersen değiştir)
+const GIF_URL = "https://i.imgur.com/3LLNakg.gif";  // Alttaki büyük GIF (Attığın GIF)
 
 // --- TICKET KATEGORİLERİ ---
 const TICKET_KATEGORILERI = [
@@ -45,23 +48,29 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isChatInputCommand()) {
         const { commandName } = interaction;
 
-        // --- /destek-oluştur (EMBEDSİZ, SADE TASARIM) ---
+        // --- /destek-oluştur (GIF'Lİ TASARIM) ---
         if (commandName === 'destek-oluştur') {
             if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
                 return interaction.reply({ content: '❌ Bu komutu sadece kurucular kullanabilir.', ephemeral: true });
             }
 
-            const panelMetni = 
-                `📌 **Mercimek Network Destek**\n\n` +
-                `Bilet oluşturmadan önce aşağıdaki kuralları okuyunuz. Aşağıdaki butonlardan size uygun kategoriyi seçerek destek talebi oluşturabilirsiniz.\n\n` +
-                `**Genel Kurallar:**\n` +
-                `• Biletinizi 24 saat içerisinde kontrol etmek zorundasınız.\n` +
-                `• Yönetim üyelerine özel mesaj atmaktan kaçının.\n` +
-                `• Sorunlarınızı bilet aracılığıyla iletişim kurun.\n\n` +
-                `**Sorun Bildirimi:**\n` +
-                `• Sorunu detaylı bir şekilde açıklayın.\n` +
-                `• Gerekli bilgileri eksiksiz paylaşın.\n\n` +
-                `*Powered by MercimekNW*`;
+            const panelEmbed = new EmbedBuilder()
+                .setTitle('Mercimek Network Destek')
+                .setDescription(
+                    `Bilet oluşturmadan önce aşağıdaki kuralları okuyunuz. Aşağıdaki butonlardan size uygun kategoriyi seçerek destek talebi oluşturabilirsiniz.\n\n` +
+                    `**Genel Kurallar:**\n` +
+                    `• Biletinizi 24 saat içerisinde kontrol etmek zorundasınız.\n` +
+                    `• Yönetim üyelerine özel mesaj atmaktan kaçının.\n` +
+                    `• Sorunlarınızı bilet aracılığıyla iletişim kurun.\n\n` +
+                    `**Sorun Bildirimi:**\n` +
+                    `• Sorunu detaylı bir şekilde açıklayın.\n` +
+                    `• Gerekli bilgileri eksiksiz paylaşın.`
+                )
+                .setColor('#FFA500') // Turuncu renk
+                .setThumbnail(LOGO_URL) // Sağ üstteki küçük logo
+                .setImage(GIF_URL)      // Alttaki büyük GIF
+                .setFooter({ text: 'Powered by MercimekNW • ticket-tool.app', iconURL: client.user.displayAvatarURL() })
+                .setTimestamp();
 
             const menu = new StringSelectMenuBuilder()
                 .setCustomId('ticket_menu')
@@ -71,7 +80,9 @@ client.on('interactionCreate', async interaction => {
                 })));
 
             const row = new ActionRowBuilder().addComponents(menu);
-            await interaction.channel.send({ content: panelMetni, components: [row] });
+            
+            // Embed ve menüyü gönderiyoruz
+            await interaction.channel.send({ embeds: [panelEmbed], components: [row] });
             return interaction.reply({ content: '✅ Destek paneli başarıyla gönderildi.', ephemeral: true });
         }
 
@@ -223,7 +234,7 @@ client.on('interactionCreate', async interaction => {
             return interaction.reply({ content: `❓ **Soru:** ${soru}\n🎱 **Cevap:** ${cevap}` });
         }
 
-        // --- /akinator (Kütüphane kullanımı düzeltildi) ---
+        // --- /akinator ---
         if (commandName === 'akinator') {
             try {
                 await akinator(interaction, {
